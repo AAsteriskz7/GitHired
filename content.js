@@ -118,20 +118,27 @@ async function processRow(tr) {
 
 /**
  * Cleans up old job states from Chrome Local Storage.
- * Removes any entries older than 30 days.
+ * Removes any entries older than the user-configured retention period (default 30 days).
  */
 function cleanupOldJobs() {
     chrome.storage.local.get(null, (items) => {
+        let retentionDays = 30;
+        if (items["_githired_settings"] && items["_githired_settings"].retentionDays) {
+            retentionDays = items["_githired_settings"].retentionDays;
+        }
+
         const now = Date.now();
-        const thirtyDaysInMillis = 30 * 24 * 60 * 60 * 1000;
+        const retentionInMillis = retentionDays * 24 * 60 * 60 * 1000;
         const keysToRemove = [];
 
         for (const [key, value] of Object.entries(items)) {
+            if (key === "_githired_settings") continue;
+
             // If it's a plain number, we could choose to convert it or remove it.
             // For now, let's just let the user re-click or keep it.
             // If it has a timestamp, we check it.
             if (typeof value === 'object' && value !== null && value.timestamp) {
-                if (now - value.timestamp > thirtyDaysInMillis) {
+                if (now - value.timestamp > retentionInMillis) {
                     keysToRemove.push(key);
                 }
             } else if (typeof value === 'number') {
