@@ -68,7 +68,18 @@ async function processRow(tr) {
 
     // Fetch existing state from Chrome Local Storage
     chrome.storage.local.get([jobId], (result) => {
-        let currentState = result[jobId] || STATE_TODO;
+        let storedData = result[jobId];
+        let currentState = STATE_TODO;
+
+        if (storedData !== undefined) {
+            if (typeof storedData === 'number') {
+                // Backward compatibility: Handle plain integers
+                currentState = storedData;
+            } else if (typeof storedData === 'object' && storedData !== null) {
+                // Handle objects with state and timestamp
+                currentState = storedData.state !== undefined ? storedData.state : STATE_TODO;
+            }
+        }
 
         // Build the toggle element
         const toggle = document.createElement('span');
@@ -90,7 +101,7 @@ async function processRow(tr) {
             // If it is Done, revert to To Do. Otherwise, mark as Done.
             currentState = currentState === STATE_DONE ? STATE_TODO : STATE_DONE;
             updateToggleUI(toggle, currentState);
-            chrome.storage.local.set({ [jobId]: currentState });
+            chrome.storage.local.set({ [jobId]: { state: currentState, timestamp: Date.now() } });
         });
 
         // EVENT 2: Auto-trigger "In Progress" when Apply link is clicked
@@ -99,9 +110,39 @@ async function processRow(tr) {
             if (currentState === STATE_TODO) {
                 currentState = STATE_IN_PROGRESS;
                 updateToggleUI(toggle, currentState);
-                chrome.storage.local.set({ [jobId]: currentState });
+                chrome.storage.local.set({ [jobId]: { state: currentState, timestamp: Date.now() } });
             }
         });
+    });
+}
+
+/**
+ * Cleans up old job states from Chrome Local Storage.
+ * Removes any entries older than 30 days.
+ */
+function cleanupOldJobs() {
+    chrome.storage.local.get(null, (items) => {
+        const now = Date.now();
+        const thirtyDaysInMillis = 30 * 24 * 60 * 60 * 1000;
+        const keysToRemove = [];
+
+        for (const [key, value] of Object.entries(items)) {
+            // If it's a plain number, we could choose to convert it or remove it.
+            // For now, let's just let the user re-click or keep it.
+            // If it has a timestamp, we check it.
+            if (typeof value === 'object' && value !== null && value.timestamp) {
+                if (now - value.timestamp > thirtyDaysInMillis) {
+                    keysToRemove.push(key);
+                }
+            } else if (typeof value === 'number') {
+                // If we also want to remove legacy numeric items that are old,
+                // we can't really tell their age. Let's leave them be for now.
+            }
+        }
+
+        if (keysToRemove.length > 0) {
+            chrome.storage.local.remove(keysToRemove);
+        }
     });
 }
 
@@ -109,6 +150,7 @@ async function processRow(tr) {
  * Scans the page for markdown tables and processes their rows.
  */
 function initTracker() {
+    cleanupOldJobs();
     const rows = document.querySelectorAll('table tbody tr');
     rows.forEach(processRow);
 }
