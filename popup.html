@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>GitHired Popup</title>
+  <style>
+    body {
+      width: 250px;
+      font-family: Arial, sans-serif;
+      padding: 10px;
+      text-align: center;
+    }
+    .section {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    .section:last-child {
+      border-bottom: none;
+    }
+    button {
+      padding: 6px 10px;
+      margin-top: 5px;
+      cursor: pointer;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    #clear-btn { background-color: #f44336; }
+    #clear-btn:hover { background-color: #d32f2f; }
+    #save-settings-btn { background-color: #4CAF50; }
+    #save-settings-btn:hover { background-color: #45a049; }
+    #export-btn { background-color: #2196F3; }
+    #export-btn:hover { background-color: #0b7dda; }
+    #status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: green;
+      display: none;
+    }
+    .stats {
+      font-size: 14px;
+      text-align: left;
+      margin-left: 10px;
+    }
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .settings-row input {
+      width: 50px;
+      padding: 4px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h3>GitHired</h3>
+
+  <div class="section stats">
+    <strong>Stats:</strong><br/>
+    Total Tracked: <span id="stat-total">0</span><br/>
+    In Progress: <span id="stat-progress">0</span><br/>
+    Applied: <span id="stat-applied">0</span>
+  </div>
+
+  <div class="section">
+    <div class="settings-row">
+      <label for="retention-days">History (days):</label>
+      <input type="number" id="retention-days" min="1" max="365" value="30">
+    </div>
+    <button id="save-settings-btn">Save Settings</button>
+  </div>
+
+  <div class="section">
+    <button id="export-btn">Export Data (JSON)</button><br/>
+    <button id="clear-btn">Clear All Data</button>
+  </div>
+
+  <div id="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
